@@ -11,7 +11,7 @@ interface PianoProps {
   activeNotes: string[];
   setActiveNotes: React.Dispatch<React.SetStateAction<string[]>>;
   notesInKey: string[] | null;
-  onNotePlay?: (note: string) => void;
+  onNotePlay?: (note: string, type: 'note') => void;
 }
 
 export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes, notesInKey, onNotePlay }: PianoProps) {
@@ -26,7 +26,7 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
         const currentOctave = ['k', 'o', 'l', 'p', ';'].includes(key) ? octave + 1 : octave;
         const fullNote = getFullNote(noteName, currentOctave);
         playNote(fullNote);
-        onNotePlay?.(fullNote);
+        onNotePlay?.(fullNote, 'note');
         setActiveNotes((prev) => [...prev, fullNote]);
       }
     },
@@ -72,7 +72,7 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
 
   const handleInteractionStart = (fullNote: string) => {
     playNote(fullNote);
-    onNotePlay?.(fullNote);
+    onNotePlay?.(fullNote, 'note');
     setActiveNotes((prev) => [...prev, fullNote]);
   };
 

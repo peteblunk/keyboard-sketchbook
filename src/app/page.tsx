@@ -70,7 +70,7 @@ export default function Home() {
     setAudioInitialized(true);
   };
 
-  const addTranscriptEntry = (content: string, type: 'note' | 'chord') => {
+  const addTranscriptEntry = React.useCallback((content: string, type: 'note' | 'chord') => {
     const newEntry: TranscriptEntry = { id: entryIdCounter.current++, content, type };
     setSketchbookRows(prevRows => {
       const newRows = [...prevRows];
@@ -80,13 +80,13 @@ export default function Home() {
       }
       return newRows;
     });
-  };
+  }, []);
 
-  const handleAddRow = () => {
+  const handleAddRow = React.useCallback(() => {
     setSketchbookRows(prev => [...prev, { id: rowIdCounter.current++, entries: [] }]);
-  };
+  }, []);
 
-  const handleClearEntry = (rowId: number, entryId: number) => {
+  const handleClearEntry = React.useCallback((rowId: number, entryId: number) => {
     setSketchbookRows(prevRows =>
       prevRows.map(row =>
         row.id === rowId
@@ -94,30 +94,15 @@ export default function Home() {
           : row
       )
     );
-  };
+  }, []);
 
-  const handleClearAllEntries = () => {
+  const handleClearAllEntries = React.useCallback(() => {
     setSketchbookRows([{ id: 0, entries: [] }]);
     rowIdCounter.current = 1;
     entryIdCounter.current = 0;
-  };
+  }, []);
 
-  const handlePlayEntry = (entry: TranscriptEntry) => {
-    if (entry.type === 'note') {
-      playNoteWithDuration(entry.content, '8n');
-      setActiveNotes(prev => [...prev, entry.content]);
-      setTimeout(() => {
-        setActiveNotes(prev => prev.filter(n => n !== entry.content));
-      }, 500);
-    } else if (entry.type === 'chord') {
-      const chord = chordProgression?.find(c => c.name === entry.content);
-      if (chord) {
-        handleChordPlay(chord, false); // Don't add to transcript again
-      }
-    }
-  };
-
-  const handleChordPlay = (chord: Chord, addToTranscript = true) => {
+  const handleChordPlay = React.useCallback((chord: Chord, addToTranscript = true) => {
     if (!chord.notes || chord.notes.length === 0) return;
   
     if (addToTranscript) {
@@ -143,7 +128,23 @@ export default function Home() {
     setTimeout(() => {
       setActiveNotes(prev => prev.filter(n => !notesToPlay.includes(n)));
     }, 1000);
-  };
+  }, [addTranscriptEntry, octave, playChord]);
+
+  const handlePlayEntry = React.useCallback((entry: TranscriptEntry) => {
+    if (entry.type === 'note') {
+      playNoteWithDuration(entry.content, '8n');
+      setActiveNotes(prev => [...prev, entry.content]);
+      setTimeout(() => {
+        setActiveNotes(prev => prev.filter(n => n !== entry.content));
+      }, 500);
+    } else if (entry.type === 'chord') {
+      const chord = chordProgression?.find(c => c.name === entry.content);
+      if (chord) {
+        handleChordPlay(chord, false); // Don't add to transcript again
+      }
+    }
+  }, [chordProgression, handleChordPlay, playNoteWithDuration]);
+
 
   if (!audioInitialized) {
     return (
@@ -239,7 +240,7 @@ export default function Home() {
                 activeNotes={activeNotes}
                 setActiveNotes={setActiveNotes}
                 notesInKey={notesInKey}
-                onNotePlay={(note) => addTranscriptEntry(note, 'note')}
+                onNotePlay={addTranscriptEntry}
               />
             </CardContent>
           </Card>
