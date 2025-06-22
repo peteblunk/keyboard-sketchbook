@@ -11,9 +11,10 @@ interface PianoProps {
   activeNotes: string[];
   setActiveNotes: React.Dispatch<React.SetStateAction<string[]>>;
   notesInKey: string[] | null;
+  onNotePlay?: (note: string) => void;
 }
 
-export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes, notesInKey }: PianoProps) {
+export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes, notesInKey, onNotePlay }: PianoProps) {
   const getFullNote = (note: string, octave: number) => `${note}${octave}`;
 
   const handleKeyDown = useCallback(
@@ -25,10 +26,11 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
         const currentOctave = ['k', 'o', 'l', 'p', ';'].includes(key) ? octave + 1 : octave;
         const fullNote = getFullNote(noteName, currentOctave);
         playNote(fullNote);
+        onNotePlay?.(fullNote);
         setActiveNotes((prev) => [...prev, fullNote]);
       }
     },
-    [octave, playNote, setActiveNotes]
+    [octave, playNote, setActiveNotes, onNotePlay]
   );
 
   const handleKeyUp = useCallback(
@@ -70,6 +72,7 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
 
   const handleInteractionStart = (fullNote: string) => {
     playNote(fullNote);
+    onNotePlay?.(fullNote);
     setActiveNotes((prev) => [...prev, fullNote]);
   };
 
@@ -96,7 +99,7 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
             className={cn(
               'relative flex h-full w-full flex-col justify-end rounded-b-md border-2 border-b-8 border-t-0 border-neutral-300 bg-key-white p-2 text-neutral-900 transition-all hover:bg-neutral-200',
               isActive && 'border-b-primary bg-primary/20',
-              !isInKey && 'opacity-50'
+              !isInKey && 'bg-neutral-300 opacity-60'
             )}
           >
             <span className="pointer-events-none absolute bottom-2 text-xs font-semibold">{note}</span>
@@ -113,26 +116,24 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
         const whiteKeyIndex = whiteKeys.findIndex(
           (wk) => wk.octave > keyOctave || (wk.octave === keyOctave && NOTES.indexOf(wk.note) > NOTES.indexOf(note))
         );
-        const left = (whiteKeyIndex / whiteKeys.length) * 100;
-
+        
         return (
           <div
             key={fullNote}
-            onMouseDown={() => handleInteractionStart(fullNote)}
-            onMouseUp={() => handleInteractionEnd(fullNote)}
-            onMouseLeave={() => isActive && handleInteractionEnd(fullNote)}
-            onTouchStart={(e) => { e.preventDefault(); handleInteractionStart(fullNote); }}
-            onTouchEnd={() => handleInteractionEnd(fullNote)}
+            onMouseDown={(e) => { e.stopPropagation(); handleInteractionStart(fullNote); }}
+            onMouseUp={(e) => { e.stopPropagation(); handleInteractionEnd(fullNote); }}
+            onMouseLeave={(e) => { e.stopPropagation(); isActive && handleInteractionEnd(fullNote); }}
+            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handleInteractionStart(fullNote); }}
+            onTouchEnd={(e) => { e.stopPropagation(); handleInteractionEnd(fullNote); }}
             className={cn(
-              'absolute top-0 z-10 h-[60%] -ml-[calc(100%/var(--total-white-keys)*0.3)] cursor-pointer select-none rounded-b-md border-b-4 border-neutral-800 bg-neutral-900 transition-colors hover:bg-neutral-700',
+              'absolute top-0 z-10 h-[60%] w-[calc(100%/var(--total-white-keys)*0.6)] -ml-[calc(100%/var(--total-white-keys)*0.3)] cursor-pointer select-none rounded-b-md border-b-4 border-neutral-800 bg-neutral-900 transition-colors hover:bg-neutral-700',
               isActive && 'bg-primary border-b-primary-foreground/50',
-              notesInKey && isInKey && 'border-accent bg-neutral-800',
-              !isInKey && 'opacity-50'
+              isInKey && 'border-accent bg-neutral-800',
+              !isInKey && 'bg-neutral-600 opacity-60'
             )}
             style={{
                 '--total-white-keys': whiteKeys.length,
                 left: `${(whiteKeyIndex / whiteKeys.length) * 100}%`,
-                width: `calc(100% / var(--total-white-keys) * 0.6)`,
             } as React.CSSProperties}
           />
         );

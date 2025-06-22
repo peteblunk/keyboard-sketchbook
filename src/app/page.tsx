@@ -31,16 +31,20 @@ import {
 import { useSound, type InstrumentName } from '@/hooks/use-sound';
 import { Piano } from '@/components/piano';
 import { HarmonySuggester } from '@/components/harmony-suggester';
+import { Sketchbook, type TranscriptEntry } from '@/components/sketchbook';
 import { KEYBOARD_MAPPING, INSTRUMENTS, KEY_NOTES, NOTES } from '@/lib/constants';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import type { SuggestHarmonyOutput } from '@/ai/flows/suggest-harmony';
+import type { SuggestHarmonyOutput, Chord } from '@/ai/flows/suggest-harmony';
 
 export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
-  const [chordProgression, setChordProgression] = React.useState<SuggestHarmonyOutput['chordProgression'] | null>(null);
+  const [chordProgression, setChordProgression] = React.useState<Chord[] | null>(null);
+  const [transcriptEntries, setTranscriptEntries] = React.useState<TranscriptEntry[]>([]);
+  const entryIdCounter = React.useRef(0);
+
   const {
     isLoaded,
     isPlayingDemo,
@@ -48,6 +52,7 @@ export default function Home() {
     playNote,
     stopNote,
     playChord,
+    playNoteWithDuration,
     setInstrument,
     playDemo,
     stopDemo,
@@ -63,13 +68,44 @@ export default function Home() {
     setAudioInitialized(true);
   };
 
-  const handleChordPlay = (chordNotes: string[]) => {
-    if (!chordNotes || chordNotes.length === 0) return;
+  const addTranscriptEntry = (content: string, type: 'note' | 'chord') => {
+    setTranscriptEntries(prev => [...prev, { id: entryIdCounter.current++, content, type }]);
+  };
+
+  const handleClearEntry = (id: number) => {
+    setTranscriptEntries(prev => prev.filter(entry => entry.id !== id));
+  };
+
+  const handleClearAllEntries = () => {
+    setTranscriptEntries([]);
+  };
+
+  const handlePlayEntry = (entry: TranscriptEntry) => {
+    if (entry.type === 'note') {
+      playNoteWithDuration(entry.content, '8n');
+      setActiveNotes(prev => [...prev, entry.content]);
+      setTimeout(() => {
+        setActiveNotes(prev => prev.filter(n => n !== entry.content));
+      }, 500);
+    } else if (entry.type === 'chord') {
+      const chord = chordProgression?.find(c => c.name === entry.content);
+      if (chord) {
+        handleChordPlay(chord, false); // Don't add to transcript again
+      }
+    }
+  };
+
+  const handleChordPlay = (chord: Chord, addToTranscript = true) => {
+    if (!chord.notes || chord.notes.length === 0) return;
   
-    const rootNote = chordNotes[0];
+    if (addToTranscript) {
+      addTranscriptEntry(chord.name, 'chord');
+    }
+
+    const rootNote = chord.notes[0];
     const rootIndex = NOTES.indexOf(rootNote);
   
-    const notesToPlay = chordNotes.map(note => {
+    const notesToPlay = chord.notes.map(note => {
       const noteIndex = NOTES.indexOf(note);
       // If note comes before root note in the scale array, it's in the next octave up
       const currentOctave = noteIndex < rootIndex ? octave + 1 : octave;
@@ -155,7 +191,7 @@ export default function Home() {
                   <Button
                     key={`${chord.name}-${index}`}
                     variant="outline"
-                    onClick={() => handleChordPlay(chord.notes)}
+                    onClick={() => handleChordPlay(chord)}
                   >
                     {chord.name}
                   </Button>
@@ -163,6 +199,13 @@ export default function Home() {
               </CardContent>
             </Card>
           )}
+
+          <Sketchbook 
+            entries={transcriptEntries}
+            onClearEntry={handleClearEntry}
+            onClearAll={handleClearAllEntries}
+            onPlayEntry={handlePlayEntry}
+          />
 
           <Card className="rounded-xl overflow-hidden shadow-lg border-2 border-border">
             <CardContent className="p-4 md:p-6">
@@ -173,6 +216,7 @@ export default function Home() {
                 activeNotes={activeNotes}
                 setActiveNotes={setActiveNotes}
                 notesInKey={notesInKey}
+                onNotePlay={(note) => addTranscriptEntry(note, 'note')}
               />
             </CardContent>
           </Card>

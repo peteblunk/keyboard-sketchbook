@@ -21,6 +21,7 @@ const ChordSchema = z.object({
   name: z.string().describe("The name of the chord, e.g., 'C' or 'Am'."),
   notes: z.array(z.string()).describe("The individual notes in the chord, e.g., ['C', 'E', 'G']. Provide only the note names, without octave numbers."),
 });
+export type Chord = z.infer<typeof ChordSchema>;
 
 const SuggestHarmonyOutputSchema = z.object({
   chordProgression: z
