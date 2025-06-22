@@ -126,6 +126,7 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
             className={cn(
               'absolute top-0 z-10 h-[60%] -ml-[calc(100%/var(--total-white-keys)*0.3)] cursor-pointer select-none rounded-b-md border-b-4 border-neutral-800 bg-neutral-900 transition-colors hover:bg-neutral-700',
               isActive && 'bg-primary border-b-primary-foreground/50',
+              notesInKey && isInKey && 'border-accent bg-neutral-800',
               !isInKey && 'opacity-50'
             )}
             style={{
