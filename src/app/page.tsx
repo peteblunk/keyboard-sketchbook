@@ -99,6 +99,7 @@ export default function Home() {
   const handleClearAllEntries = () => {
     setSketchbookRows([{ id: 0, entries: [] }]);
     rowIdCounter.current = 1;
+    entryIdCounter.current = 0;
   };
 
   const handlePlayEntry = (entry: TranscriptEntry) => {
