@@ -71,7 +71,7 @@ export function useSound() {
   }, []);
 
   useEffect(() => {
-    sequenceRef.current = new Tone.Sequence(
+    const seq = new Tone.Sequence(
       (time, { note, duration }) => {
         if (instrumentRef.current) {
           instrumentRef.current.triggerAttackRelease(note, duration, time);
@@ -79,9 +79,13 @@ export function useSound() {
       },
       DEMO_MELODY,
       '4n'
-    ).on('stop', () => {
+    );
+    
+    seq.on('stop', () => {
         setIsPlayingDemo(false);
     });
+
+    sequenceRef.current = seq;
 
     return () => {
       sequenceRef.current?.dispose();
