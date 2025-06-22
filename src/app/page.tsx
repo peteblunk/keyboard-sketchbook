@@ -31,7 +31,7 @@ import {
 import { useSound, type InstrumentName } from '@/hooks/use-sound';
 import { Piano } from '@/components/piano';
 import { HarmonySuggester } from '@/components/harmony-suggester';
-import { Sketchbook, type TranscriptEntry } from '@/components/sketchbook';
+import { Sketchbook, type TranscriptEntry, type SketchbookRow } from '@/components/sketchbook';
 import { KEYBOARD_MAPPING, INSTRUMENTS, KEY_NOTES, NOTES } from '@/lib/constants';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
@@ -42,8 +42,10 @@ export default function Home() {
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
   const [chordProgression, setChordProgression] = React.useState<Chord[] | null>(null);
-  const [transcriptEntries, setTranscriptEntries] = React.useState<TranscriptEntry[]>([]);
+
+  const [sketchbookRows, setSketchbookRows] = React.useState<SketchbookRow[]>([{ id: 0, entries: [] }]);
   const entryIdCounter = React.useRef(0);
+  const rowIdCounter = React.useRef(1);
 
   const {
     isLoaded,
@@ -69,15 +71,34 @@ export default function Home() {
   };
 
   const addTranscriptEntry = (content: string, type: 'note' | 'chord') => {
-    setTranscriptEntries(prev => [...prev, { id: entryIdCounter.current++, content, type }]);
+    const newEntry: TranscriptEntry = { id: entryIdCounter.current++, content, type };
+    setSketchbookRows(prevRows => {
+      const newRows = [...prevRows];
+      const lastRow = newRows[newRows.length - 1];
+      if (lastRow) {
+        lastRow.entries.push(newEntry);
+      }
+      return newRows;
+    });
   };
 
-  const handleClearEntry = (id: number) => {
-    setTranscriptEntries(prev => prev.filter(entry => entry.id !== id));
+  const handleAddRow = () => {
+    setSketchbookRows(prev => [...prev, { id: rowIdCounter.current++, entries: [] }]);
+  };
+
+  const handleClearEntry = (rowId: number, entryId: number) => {
+    setSketchbookRows(prevRows =>
+      prevRows.map(row =>
+        row.id === rowId
+          ? { ...row, entries: row.entries.filter(entry => entry.id !== entryId) }
+          : row
+      )
+    );
   };
 
   const handleClearAllEntries = () => {
-    setTranscriptEntries([]);
+    setSketchbookRows([{ id: 0, entries: [] }]);
+    rowIdCounter.current = 1;
   };
 
   const handlePlayEntry = (entry: TranscriptEntry) => {
@@ -201,9 +222,10 @@ export default function Home() {
           )}
 
           <Sketchbook 
-            entries={transcriptEntries}
+            rows={sketchbookRows}
             onClearEntry={handleClearEntry}
             onClearAll={handleClearAllEntries}
+            onAddRow={handleAddRow}
             onPlayEntry={handlePlayEntry}
           />
 
