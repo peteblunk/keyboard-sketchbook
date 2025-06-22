@@ -1,4 +1,4 @@
-# **App Name**: Sanctuary Sounds
+# **App Name**: Keyboard Sketchbook
 
 ## Core Features:
 

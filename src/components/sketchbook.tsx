@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import * as React from 'react'; // Keep React import as it's used for hooks
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookText, Trash2, Play, XCircle, PlusCircle } from 'lucide-react';
@@ -42,7 +42,7 @@ export function Sketchbook({ rows, onClearEntry, onClearAll, onAddRow, onPlayEnt
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2">
-            <BookText /> Composition Sketchbook
+            <BookText /> Keyboard Sketchbook
           </CardTitle>
           <CardDescription>A grid to sketch out musical ideas. Add new rows for different parts.</CardDescription>
         </div>

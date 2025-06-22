@@ -150,7 +150,7 @@ export default function Home() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-4">
         <Logo className="w-24 h-24 text-primary mb-6" />
-        <h1 className="text-4xl font-headline mb-2">Welcome to Sanctuary Sounds</h1>
+        <h1 className="text-4xl font-headline mb-2">Welcome to Keyboard Sketchbook</h1>
         <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
           An immersive musical experience for exploring sacred harmonies. Click below to enable audio and begin your composition.
         </p>
@@ -178,8 +178,8 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <Logo className="w-10 h-10 text-primary" />
             <div>
-              <h1 className="text-2xl font-bold font-headline">Sanctuary Sounds</h1>
-              <p className="text-sm text-muted-foreground">A tool for sacred music composition</p>
+              <h1 className="text-2xl font-bold font-headline">Keyboard Sketchbook</h1>
+              <p className="text-sm text-muted-foreground">A tool for musical exploration</p>
             </div>
           </div>
           <Button onClick={toggleMute} variant="ghost" size="icon">
