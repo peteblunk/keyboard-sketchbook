@@ -31,13 +31,14 @@ import {
 import { useSound, type InstrumentName } from '@/hooks/use-sound';
 import { Piano } from '@/components/piano';
 import { HarmonySuggester } from '@/components/harmony-suggester';
-import { KEYBOARD_MAPPING, INSTRUMENTS } from '@/lib/constants';
+import { KEYBOARD_MAPPING, INSTRUMENTS, KEY_NOTES } from '@/lib/constants';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
+  const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
   const {
     isLoaded,
     isPlayingDemo,
@@ -51,6 +52,8 @@ export default function Home() {
     initializeAudio,
   } = useSound();
   const [audioInitialized, setAudioInitialized] = React.useState(false);
+
+  const notesInKey = selectedKey ? KEY_NOTES[selectedKey] : null;
 
   const handleInitializeAudio = async () => {
     await initializeAudio();
@@ -100,6 +103,19 @@ export default function Home() {
         </header>
 
         <div className="xl:col-span-8 flex flex-col gap-6">
+          {selectedKey && notesInKey && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Active Key: {selectedKey}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  The following notes are in this key:{" "}
+                  <span className="font-mono text-foreground tracking-wider">{notesInKey.join(', ')}</span>
+                </p>
+              </CardContent>
+            </Card>
+          )}
           <Card className="rounded-xl overflow-hidden shadow-lg border-2 border-border">
             <CardContent className="p-4 md:p-6">
               <Piano
@@ -108,6 +124,7 @@ export default function Home() {
                 stopNote={stopNote}
                 activeNotes={activeNotes}
                 setActiveNotes={setActiveNotes}
+                notesInKey={notesInKey}
               />
             </CardContent>
           </Card>
@@ -198,7 +215,7 @@ export default function Home() {
               <CardDescription>Get AI-powered chord & harmony suggestions.</CardDescription>
             </CardHeader>
             <CardContent>
-              <HarmonySuggester />
+              <HarmonySuggester onKeyChange={setSelectedKey} />
             </CardContent>
           </Card>
         </div>

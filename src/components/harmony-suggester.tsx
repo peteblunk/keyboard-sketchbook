@@ -36,7 +36,11 @@ const FormSchema = z.object({
   }),
 });
 
-export function HarmonySuggester() {
+interface HarmonySuggesterProps {
+  onKeyChange?: (key: string | null) => void;
+}
+
+export function HarmonySuggester({ onKeyChange }: HarmonySuggesterProps) {
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<SuggestHarmonyOutput | null>(null);
   const { toast } = useToast();
@@ -96,7 +100,13 @@ export function HarmonySuggester() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Musical Key</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    onKeyChange?.(value);
+                  }}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a key" />
