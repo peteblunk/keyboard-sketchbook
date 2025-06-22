@@ -65,20 +65,20 @@ export default function Home() {
 
   const notesInKey = selectedKey ? KEY_NOTES[selectedKey] : null;
 
-  const handleInitializeAudio = async () => {
+  const handleInitializeAudio = React.useCallback(async () => {
     await initializeAudio();
     setAudioInitialized(true);
-  };
+  }, [initializeAudio]);
 
   const addTranscriptEntry = React.useCallback((content: string, type: 'note' | 'chord') => {
     const newEntry: TranscriptEntry = { id: entryIdCounter.current++, content, type };
     setSketchbookRows(prevRows => {
-      const newRows = [...prevRows];
-      const lastRow = newRows[newRows.length - 1];
-      if (lastRow) {
-        lastRow.entries.push(newEntry);
-      }
-      return newRows;
+      const lastRow = prevRows[prevRows.length - 1];
+      const updatedLastRow = {
+        ...lastRow,
+        entries: [...lastRow.entries, newEntry],
+      };
+      return [...prevRows.slice(0, -1), updatedLastRow];
     });
   }, []);
 
