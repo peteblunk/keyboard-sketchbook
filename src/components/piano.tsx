@@ -13,13 +13,7 @@ interface PianoProps {
 }
 
 export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes }: PianoProps) {
-  const getNote = (note: string, currentOctave: number) => {
-    const noteIndex = NOTES.indexOf(note.toUpperCase());
-    if (noteIndex > NOTES.indexOf('B')) {
-      return `${note}${currentOctave + 1}`;
-    }
-    return `${note}${currentOctave}`;
-  };
+  const getFullNote = (note: string, octave: number) => `${note}${octave}`;
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -27,8 +21,8 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes 
       const key = event.key.toLowerCase();
       const noteName = KEYBOARD_MAPPING[key];
       if (noteName) {
-        const currentOctave = key === 'k' || key === 'o' || key === 'l' || key === 'p' || key === ';'? octave + 1 : octave;
-        const fullNote = getNote(noteName, currentOctave);
+        const currentOctave = ['k', 'o', 'l', 'p', ';'].includes(key) ? octave + 1 : octave;
+        const fullNote = getFullNote(noteName, currentOctave);
         playNote(fullNote);
         setActiveNotes((prev) => [...prev, fullNote]);
       }
@@ -41,8 +35,8 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes 
       const key = event.key.toLowerCase();
       const noteName = KEYBOARD_MAPPING[key];
       if (noteName) {
-        const currentOctave = key === 'k' || key === 'o' || key === 'l' || key === 'p' || key === ';'? octave + 1 : octave;
-        const fullNote = getNote(noteName, currentOctave);
+        const currentOctave = ['k', 'o', 'l', 'p', ';'].includes(key) ? octave + 1 : octave;
+        const fullNote = getFullNote(noteName, currentOctave);
         stopNote(fullNote);
         setActiveNotes((prev) => prev.filter((n) => n !== fullNote));
       }
@@ -59,50 +53,87 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes 
     };
   }, [handleKeyDown, handleKeyUp]);
 
-  const keys = [
-    ...NOTES.map((note) => ({ note, octave })),
-    ...NOTES.map((note) => ({ note, octave: octave + 1 })),
-  ].slice(0, 25); // ~2 octaves
+  const keysToRender = React.useMemo(() => {
+    const keys = [];
+    for (let o = octave; o < octave + 2; o++) {
+      for (const note of NOTES) {
+        keys.push({ note, octave: o });
+      }
+    }
+    const startIndex = keys.findIndex(k => k.note === 'C' && k.octave === octave);
+    return keys.slice(startIndex, startIndex + 25);
+  }, [octave]);
 
-  const Key = ({ note, isBlack, fullNote }: { note: string, isBlack: boolean, fullNote: string }) => {
-    const isActive = activeNotes.includes(fullNote);
-    return (
-      <div
-        onMouseDown={() => {
-          playNote(fullNote);
-          setActiveNotes((prev) => [...prev, fullNote]);
-        }}
-        onMouseUp={() => {
-          stopNote(fullNote);
-          setActiveNotes((prev) => prev.filter((n) => n !== fullNote));
-        }}
-        onMouseLeave={() => {
-          if (isActive) {
-            stopNote(fullNote);
-            setActiveNotes((prev) => prev.filter((n) => n !== fullNote));
-          }
-        }}
-        className={cn(
-          'relative flex h-full cursor-pointer select-none items-end justify-center rounded-b-md border-b-4 border-r border-l transition-colors',
-          isBlack
-            ? 'z-10 h-2/3 w-[55%] -ml-[27.5%] -mr-[27.5%] border-x-4 border-card bg-gray-800 text-white hover:bg-gray-700'
-            : 'w-full bg-card text-card-foreground hover:bg-muted',
-          isActive && !isBlack && 'bg-primary/70 border-primary',
-          isActive && isBlack && 'bg-primary border-primary-foreground/50',
-          isBlack ? 'border-transparent' : 'border-border'
-        )}
-      >
-        <span className="text-xs font-semibold">{note.endsWith('#') ? '' : note}</span>
-      </div>
-    );
+
+  const whiteKeys = keysToRender.filter(k => !k.note.includes('#'));
+  const numWhiteKeys = whiteKeys.length;
+
+  const handleInteractionStart = (fullNote: string) => {
+    playNote(fullNote);
+    setActiveNotes((prev) => [...prev, fullNote]);
+  };
+
+  const handleInteractionEnd = (fullNote: string) => {
+    stopNote(fullNote);
+    setActiveNotes((prev) => prev.filter((n) => n !== fullNote));
   };
   
   return (
-    <div className="relative flex h-48 w-full touch-none">
-      {keys.map(({ note, octave: keyOctave }, index) => {
-        const fullNote = getNote(note, keyOctave);
-        const isBlack = note.includes('#');
-        return <Key key={index} note={note} isBlack={isBlack} fullNote={fullNote} />;
+    <div className="relative flex h-48 w-full touch-none select-none">
+      {/* White Keys */}
+      {whiteKeys.map(({ note, octave: keyOctave }) => {
+        const fullNote = getFullNote(note, keyOctave);
+        const isActive = activeNotes.includes(fullNote);
+        return (
+          <div
+            key={fullNote}
+            onMouseDown={() => handleInteractionStart(fullNote)}
+            onMouseUp={() => handleInteractionEnd(fullNote)}
+            onMouseLeave={() => isActive && handleInteractionEnd(fullNote)}
+            onTouchStart={(e) => { e.preventDefault(); handleInteractionStart(fullNote); }}
+            onTouchEnd={() => handleInteractionEnd(fullNote)}
+            className={cn(
+              'relative flex-1 cursor-pointer select-none items-end justify-center rounded-b-md border-b-4 border-r border-l border-border bg-card p-2 text-card-foreground transition-colors hover:bg-muted',
+              isActive && 'bg-primary/70 border-b-primary'
+            )}
+          >
+            <span className="pointer-events-none text-xs font-semibold">{note}</span>
+          </div>
+        );
+      })}
+
+      {/* Black Keys */}
+      {keysToRender.map(({ note, octave: keyOctave }) => {
+        if (!note.includes('#')) return null;
+
+        const fullNote = getFullNote(note, keyOctave);
+        const isActive = activeNotes.includes(fullNote);
+        
+        const prevWhiteKeyIndex = whiteKeys.findIndex(
+          (wk) => wk.octave > keyOctave || (wk.octave === keyOctave && NOTES.indexOf(wk.note) > NOTES.indexOf(note))
+        );
+
+        const left = (prevWhiteKeyIndex / numWhiteKeys) * 100;
+        
+        return (
+          <div
+            key={fullNote}
+            style={{
+              left: `${left}%`,
+              transform: 'translateX(-50%)',
+              width: `${(100 / numWhiteKeys) * 0.6}%`
+            }}
+            onMouseDown={() => handleInteractionStart(fullNote)}
+            onMouseUp={() => handleInteractionEnd(fullNote)}
+            onMouseLeave={() => isActive && handleInteractionEnd(fullNote)}
+            onTouchStart={(e) => { e.preventDefault(); handleInteractionStart(fullNote); }}
+            onTouchEnd={() => handleInteractionEnd(fullNote)}
+            className={cn(
+              'absolute top-0 z-10 h-[60%] cursor-pointer select-none rounded-b-md border-b-4 border-neutral-800 bg-neutral-900 transition-colors hover:bg-neutral-700',
+              isActive && 'bg-primary border-b-primary-foreground/50'
+            )}
+          />
+        );
       })}
     </div>
   );
