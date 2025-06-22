@@ -81,10 +81,6 @@ export function useSound() {
       '4n'
     );
     
-    seq.on('stop', () => {
-        setIsPlayingDemo(false);
-    });
-
     sequenceRef.current = seq;
 
     return () => {
@@ -99,6 +95,11 @@ export function useSound() {
         }
         sequenceRef.current.start(0);
         setIsPlayingDemo(true);
+
+        // Schedule a callback for when the sequence finishes
+        Tone.Transport.scheduleOnce(() => {
+          setIsPlayingDemo(false);
+        }, sequenceRef.current.loopEnd);
     }
   }, []);
 
