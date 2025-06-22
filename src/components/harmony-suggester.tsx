@@ -38,9 +38,10 @@ const FormSchema = z.object({
 
 interface HarmonySuggesterProps {
   onKeyChange?: (key: string | null) => void;
+  onChordProgressionChange?: (chords: SuggestHarmonyOutput['chordProgression'] | null) => void;
 }
 
-export function HarmonySuggester({ onKeyChange }: HarmonySuggesterProps) {
+export function HarmonySuggester({ onKeyChange, onChordProgressionChange }: HarmonySuggesterProps) {
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<SuggestHarmonyOutput | null>(null);
   const { toast } = useToast();
@@ -51,10 +52,12 @@ export function HarmonySuggester({ onKeyChange }: HarmonySuggesterProps) {
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     setResult(null);
+    onChordProgressionChange?.(null);
     startTransition(async () => {
       try {
         const harmonySuggestion = await suggestHarmony(data);
         setResult(harmonySuggestion);
+        onChordProgressionChange?.(harmonySuggestion.chordProgression);
       } catch (error) {
         console.error('Error fetching harmony suggestions:', error);
         toast({
@@ -142,7 +145,7 @@ export function HarmonySuggester({ onKeyChange }: HarmonySuggesterProps) {
               <CardTitle>Chord Progression</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm font-mono bg-muted p-3 rounded-md">{result.chordProgression}</p>
+              <p className="text-sm font-mono bg-muted p-3 rounded-md">{result.chordProgression.map(c => c.name).join(' - ')}</p>
             </CardContent>
           </Card>
           <Card>

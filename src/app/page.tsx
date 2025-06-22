@@ -31,20 +31,23 @@ import {
 import { useSound, type InstrumentName } from '@/hooks/use-sound';
 import { Piano } from '@/components/piano';
 import { HarmonySuggester } from '@/components/harmony-suggester';
-import { KEYBOARD_MAPPING, INSTRUMENTS, KEY_NOTES } from '@/lib/constants';
+import { KEYBOARD_MAPPING, INSTRUMENTS, KEY_NOTES, NOTES } from '@/lib/constants';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import type { SuggestHarmonyOutput } from '@/ai/flows/suggest-harmony';
 
 export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
+  const [chordProgression, setChordProgression] = React.useState<SuggestHarmonyOutput['chordProgression'] | null>(null);
   const {
     isLoaded,
     isPlayingDemo,
     isMuted,
     playNote,
     stopNote,
+    playChord,
     setInstrument,
     playDemo,
     stopDemo,
@@ -58,6 +61,30 @@ export default function Home() {
   const handleInitializeAudio = async () => {
     await initializeAudio();
     setAudioInitialized(true);
+  };
+
+  const handleChordPlay = (chordNotes: string[]) => {
+    if (!chordNotes || chordNotes.length === 0) return;
+  
+    const rootNote = chordNotes[0];
+    const rootIndex = NOTES.indexOf(rootNote);
+  
+    const notesToPlay = chordNotes.map(note => {
+      const noteIndex = NOTES.indexOf(note);
+      // If note comes before root note in the scale array, it's in the next octave up
+      const currentOctave = noteIndex < rootIndex ? octave + 1 : octave;
+      return `${note}${currentOctave}`;
+    });
+  
+    playChord(notesToPlay, '1s');
+  
+    // Highlight notes on the piano
+    setActiveNotes(prev => [...prev, ...notesToPlay]);
+  
+    // Un-highlight notes after they finished playing
+    setTimeout(() => {
+      setActiveNotes(prev => prev.filter(n => !notesToPlay.includes(n)));
+    }, 1000);
   };
 
   if (!audioInitialized) {
@@ -116,6 +143,27 @@ export default function Home() {
               </CardContent>
             </Card>
           )}
+
+          {chordProgression && chordProgression.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Chord Progression Player</CardTitle>
+                <CardDescription>Click a chord to hear it played.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {chordProgression.map((chord, index) => (
+                  <Button
+                    key={`${chord.name}-${index}`}
+                    variant="outline"
+                    onClick={() => handleChordPlay(chord.notes)}
+                  >
+                    {chord.name}
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="rounded-xl overflow-hidden shadow-lg border-2 border-border">
             <CardContent className="p-4 md:p-6">
               <Piano
@@ -215,7 +263,7 @@ export default function Home() {
               <CardDescription>Get AI-powered chord & harmony suggestions.</CardDescription>
             </CardHeader>
             <CardContent>
-              <HarmonySuggester onKeyChange={setSelectedKey} />
+              <HarmonySuggester onKeyChange={setSelectedKey} onChordProgressionChange={setChordProgression} />
             </CardContent>
           </Card>
         </div>

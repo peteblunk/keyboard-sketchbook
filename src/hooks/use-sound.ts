@@ -65,6 +65,12 @@ export function useSound() {
     }
   }, [isLoaded]);
 
+  const playChord = useCallback((notes: string[], duration: Tone.Unit.Time) => {
+    if (isLoaded && instrumentRef.current) {
+      instrumentRef.current.triggerAttackRelease(notes, duration, Tone.now());
+    }
+  }, [isLoaded]);
+
   const toggleMute = useCallback(() => {
     Tone.Destination.mute = !Tone.Destination.mute;
     setIsMuted(Tone.Destination.mute);
@@ -118,6 +124,7 @@ export function useSound() {
     isMuted,
     playNote,
     stopNote,
+    playChord,
     setInstrument,
     playDemo,
     stopDemo,
