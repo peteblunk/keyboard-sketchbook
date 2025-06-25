@@ -86,8 +86,11 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
     const sharpName = note;
     const flatName = NOTES[NOTES.indexOf(note) - 1]?.replace('#', 'b');
 
-    if (notesInKey.includes(sharpName)) return sharpName;
-    if (flatName && notesInKey.includes(flatName)) return flatName;
+    // Prioritize sharp name if both are in the key
+ if (notesInKey.includes(sharpName)) return sharpName;
+    // If sharp is not in the key, check for the flat name
+ if (flatName && notesInKey.includes(flatName)) return flatName;
+ return note; // Fallback to sharp name if neither is in the key
   };
   
   return (
@@ -111,7 +114,7 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
               !isInKey && 'bg-neutral-300 opacity-60'
             )}
           >
-            <span className="pointer-events-none absolute bottom-2 text-xs font-semibold">{note}</span>
+            <span className="pointer-events-none absolute bottom-6 left-1/2 transform -translate-x-1/2 text-lg font-semibold">{note}</span>
           </div>
         );
       })}
@@ -142,11 +145,9 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
             )}
             style={{
                 '--total-white-keys': whiteKeys.length,
-                left: `${(whiteKeyIndex / whiteKeys.length) * 100}%`,
-            } as React.CSSProperties}
-          >\n
-            <span className="pointer-events-none absolute bottom-2 left-1/2 transform -translate-x-1/2 text-[0.6rem] font-semibold text-white">{getBlackKeyLabel(note)}</span>
-          </div>
+ left: `${(whiteKeyIndex / whiteKeys.length) * 100}%`,
+            } as React.CSSProperties}>
+ <span className="pointer-events-none absolute bottom-6 left-1/2 transform -translate-x-1/2 text-base font-semibold text-white">{getBlackKeyLabel(note)}</span>          </div>
         );
       })}
     </div>
