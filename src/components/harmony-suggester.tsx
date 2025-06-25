@@ -38,19 +38,18 @@ const FormSchema = z.object({
 
 interface HarmonySuggesterProps {
   onChordProgressionChange?: (chords: SuggestHarmonyOutput['chordProgression'] | null) => void;
+  selectedKey?: string | null;
+  selectedKey?: string | null;
 }
 const DEFAULT_MUSICAL_KEY = 'C major';
 
-export function HarmonySuggester({ onKeyChange, onChordProgressionChange }: HarmonySuggesterProps) {
+export function HarmonySuggester({ onChordProgressionChange, selectedKey }: HarmonySuggesterProps) {
   const [isPending, startTransition] = React.useTransition();
   const [result, setResult] = React.useState<SuggestHarmonyOutput | null>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      key: DEFAULT_MUSICAL_KEY,
-    },
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -105,14 +104,7 @@ export function HarmonySuggester({ onKeyChange, onChordProgressionChange }: Harm
             name="key"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Musical Key</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    onKeyChange?.(value);
-                  }}
-                  value={field.value}
-                >
+                <Select onValueChange={field.onChange} value={selectedKey || ''}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a key" />

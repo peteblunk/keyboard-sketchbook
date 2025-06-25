@@ -40,7 +40,7 @@ import type { SuggestHarmonyOutput, Chord } from '@/ai/flows/suggest-harmony';
 export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
-  const [pianoKey, setPianoKey] = React.useState<string | null>('C major');
+  const [pianoKey, setPianoKey] = React.useState<string>('C Major');
   const [chordProgression, setChordProgression] = React.useState<Chord[] | null>(null);
 
   const [sketchbookRows, setSketchbookRows] = React.useState<SketchbookRow[]>([{ id: 0, entries: [] }]);
@@ -62,7 +62,6 @@ export default function Home() {
     initializeAudio,
   } = useSound();
   const [audioInitialized, setAudioInitialized] = React.useState(false);
-
   const notesInKey = pianoKey ? KEY_NOTES[pianoKey] : null;
 
   const handleInitializeAudio = React.useCallback(async () => {
@@ -309,8 +308,8 @@ export default function Home() {
               </div>
               
               <div>
-                <label className="text-sm font-medium mb-2 block">Key Highlighting</label>
-                <Select onValueChange={setPianoKey} value={pianoKey || ''}>
+                <label className="text-sm font-medium mb-2 block">Selected Key</label>
+                <Select onValueChange={setPianoKey} value={pianoKey}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a key" />
                   </SelectTrigger>
@@ -318,6 +317,7 @@ export default function Home() {
                     {Object.keys(KEY_NOTES).map((key) => (
                       <SelectItem key={key} value={key}>
                         {key}
+
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -346,7 +346,7 @@ export default function Home() {
               <CardDescription>Get AI-powered chord & harmony suggestions.</CardDescription>
             </CardHeader>
             <CardContent>
-              <HarmonySuggester onChordProgressionChange={setChordProgression} />
+              <HarmonySuggester onChordProgressionChange={setChordProgression} selectedKey={pianoKey} onKeyChange={setPianoKey} />
             </CardContent>
           </Card>
         </div>
