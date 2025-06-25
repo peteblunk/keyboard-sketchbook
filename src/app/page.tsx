@@ -40,7 +40,7 @@ import type { SuggestHarmonyOutput, Chord } from '@/ai/flows/suggest-harmony';
 export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
-  const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
+  const [pianoKey, setPianoKey] = React.useState<string | null>('C major');
   const [chordProgression, setChordProgression] = React.useState<Chord[] | null>(null);
 
   const [sketchbookRows, setSketchbookRows] = React.useState<SketchbookRow[]>([{ id: 0, entries: [] }]);
@@ -63,7 +63,7 @@ export default function Home() {
   } = useSound();
   const [audioInitialized, setAudioInitialized] = React.useState(false);
 
-  const notesInKey = selectedKey ? KEY_NOTES[selectedKey] : null;
+  const notesInKey = pianoKey ? KEY_NOTES[pianoKey] : null;
 
   const handleInitializeAudio = React.useCallback(async () => {
     await initializeAudio();
@@ -189,10 +189,10 @@ export default function Home() {
         </header>
 
         <div className="xl:col-span-8 flex flex-col gap-6">
-          {selectedKey && notesInKey && (
+          {pianoKey && notesInKey && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Active Key: {selectedKey}</CardTitle>
+                <CardTitle>Active Key: {pianoKey}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -309,6 +309,21 @@ export default function Home() {
               </div>
               
               <div>
+                <label className="text-sm font-medium mb-2 block">Key Highlighting</label>
+                <Select onValueChange={setPianoKey} value={pianoKey || ''}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a key" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(KEY_NOTES).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {key}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <label className="text-sm font-medium mb-2 block">Demo Melody</label>
                 <CardDescription>"Es ist vollbracht"</CardDescription>
                 <div className="flex items-center gap-2 mt-2">
@@ -331,7 +346,7 @@ export default function Home() {
               <CardDescription>Get AI-powered chord & harmony suggestions.</CardDescription>
             </CardHeader>
             <CardContent>
-              <HarmonySuggester onKeyChange={setSelectedKey} onChordProgressionChange={setChordProgression} />
+              <HarmonySuggester onChordProgressionChange={setChordProgression} />
             </CardContent>
           </Card>
         </div>

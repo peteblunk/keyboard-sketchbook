@@ -37,9 +37,9 @@ const FormSchema = z.object({
 });
 
 interface HarmonySuggesterProps {
-  onKeyChange?: (key: string | null) => void;
   onChordProgressionChange?: (chords: SuggestHarmonyOutput['chordProgression'] | null) => void;
 }
+const DEFAULT_MUSICAL_KEY = 'C major';
 
 export function HarmonySuggester({ onKeyChange, onChordProgressionChange }: HarmonySuggesterProps) {
   const [isPending, startTransition] = React.useTransition();
@@ -48,6 +48,9 @@ export function HarmonySuggester({ onKeyChange, onChordProgressionChange }: Harm
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      key: DEFAULT_MUSICAL_KEY,
+    },
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -108,7 +111,7 @@ export function HarmonySuggester({ onKeyChange, onChordProgressionChange }: Harm
                     field.onChange(value);
                     onKeyChange?.(value);
                   }}
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>

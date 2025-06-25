@@ -80,6 +80,15 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
     stopNote(fullNote);
     setActiveNotes((prev) => prev.filter((n) => n !== fullNote));
   };
+
+  const getBlackKeyLabel = (note: string) => {
+    if (!notesInKey) return note; // Default to sharp if no key is selected
+    const sharpName = note;
+    const flatName = NOTES[NOTES.indexOf(note) - 1]?.replace('#', 'b');
+
+    if (notesInKey.includes(sharpName)) return sharpName;
+    if (flatName && notesInKey.includes(flatName)) return flatName;
+  };
   
   return (
     <div className="relative flex h-48 w-full touch-none select-none">
@@ -118,8 +127,8 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
         );
         
         return (
-          <div
-            key={fullNote}
+          <div key={fullNote}
+
             onMouseDown={(e) => { e.stopPropagation(); handleInteractionStart(fullNote); }}
             onMouseUp={(e) => { e.stopPropagation(); handleInteractionEnd(fullNote); }}
             onMouseLeave={(e) => { e.stopPropagation(); isActive && handleInteractionEnd(fullNote); }}
@@ -127,15 +136,17 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
             onTouchEnd={(e) => { e.stopPropagation(); handleInteractionEnd(fullNote); }}
             className={cn(
               'absolute top-0 z-10 h-[60%] w-[calc(100%/var(--total-white-keys)*0.6)] -ml-[calc(100%/var(--total-white-keys)*0.3)] cursor-pointer select-none rounded-b-md border-b-4 border-neutral-800 bg-neutral-900 transition-colors hover:bg-neutral-700',
-              isActive && 'bg-primary border-b-primary-foreground/50',
-              isInKey && 'border-accent bg-neutral-800',
+              isActive && 'bg-neutral-600 border-b-neutral-500',
+              isInKey && 'border-accent bg-neutral-800', // Keep base black color when in key
               !isInKey && 'bg-neutral-600 opacity-60'
             )}
             style={{
                 '--total-white-keys': whiteKeys.length,
                 left: `${(whiteKeyIndex / whiteKeys.length) * 100}%`,
             } as React.CSSProperties}
-          />
+          >\n
+            <span className="pointer-events-none absolute bottom-2 left-1/2 transform -translate-x-1/2 text-[0.6rem] font-semibold text-white">{getBlackKeyLabel(note)}</span>
+          </div>
         );
       })}
     </div>
