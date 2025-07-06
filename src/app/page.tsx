@@ -41,7 +41,6 @@ export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
   const [pianoKey, setPianoKey] = React.useState<string>('C Major');
-  const [chordProgression, setChordProgression] = React.useState<Chord[] | null>(null);
 
   const [sketchbookRows, setSketchbookRows] = React.useState<SketchbookRow[]>([{ id: 0, entries: [] }]);
   const entryIdCounter = React.useRef(0);
@@ -63,6 +62,28 @@ export default function Home() {
   } = useSound();
   const [audioInitialized, setAudioInitialized] = React.useState(false);
   const notesInKey = pianoKey ? KEY_NOTES[pianoKey] : null;
+
+  const [chordProgression, setChordProgression] = React.useState<Chord[] | null>(null);
+
+  // Calculate and set the default chord progression when pianoKey changes
+  React.useEffect(() => {
+    if (pianoKey && KEY_NOTES[pianoKey]) {
+      const notes = KEY_NOTES[pianoKey];
+      // Simple I-IV-V-I progression for demonstration
+      const defaultProgression: Chord[] = [
+        { name: notes[0], notes: [notes[0], notes[2], notes[4]] }, // I chord (Triad)
+        { name: notes[3], notes: [notes[3], notes[5], notes[0]] }, // IV chord (Triad) - C in C Major
+        { name: notes[4], notes: [notes[4], notes[6], notes[1]] }, // V chord (Triad) - D in C Major
+        { name: notes[0], notes: [notes[0], notes[2], notes[4]] }, // I chord (Triad)
+      ];
+
+      // Map notes back to their actual names in case of flats/sharps from KEY_NOTES
+      const mappedProgression = defaultProgression.map(chord => ({
+        name: chord.name,
+        notes: chord.notes.map(note => Object.keys(KEY_NOTES).find(key => KEY_NOTES[key]?.includes(note)) ? note : NOTES[NOTES.indexOf(note)]), // Find the original note name
+      }));
+      setChordProgression(mappedProgression);
+    } else { setChordProgression(null); } }, [pianoKey]);
 
   const handleInitializeAudio = React.useCallback(async () => {
     await initializeAudio();
