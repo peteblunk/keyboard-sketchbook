@@ -83,14 +83,23 @@ export function Piano({ octave, playNote, stopNote, activeNotes, setActiveNotes,
 
   const getBlackKeyLabel = (note: string) => {
     if (!notesInKey) return note; // Default to sharp if no key is selected
+  
     const sharpName = note;
     const flatName = NOTES[NOTES.indexOf(note) - 1]?.replace('#', 'b');
-
-    // Prioritize sharp name if both are in the key
- if (notesInKey.includes(sharpName)) return sharpName;
-    // If sharp is not in the key, check for the flat name
- if (flatName && notesInKey.includes(flatName)) return flatName;
- return note; // Fallback to sharp name if neither is in the key
+  
+    // Check if the sharp name is in the key
+    const isSharpInKey = notesInKey.includes(sharpName);
+  
+    // Check if the flat name exists and is in the key
+    const isFlatInKey = flatName && notesInKey.includes(flatName);
+  
+    if (isSharpInKey) {
+      return sharpName; // Return sharp name if it's in the key
+    } else if (isFlatInKey) {
+      return flatName; // Return flat name if it's in the key and sharp is not
+    } else {
+      return sharpName; // Fallback to sharp name if neither is in the key
+    }
   };
   
   return (
