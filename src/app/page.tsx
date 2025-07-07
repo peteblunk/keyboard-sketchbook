@@ -64,6 +64,8 @@ export default function Home() {
   } = useSound();
   const [audioInitialized, setAudioInitialized] = React.useState(false);
   const notesInKey = pianoKey ? KEY_NOTES[pianoKey] : null;
+  // State to track the selected chord progression by name
+  const [selectedProgressionName, setSelectedProgressionName] = React.useState<string | null>(null);
 
 
   // Function to get the note from the key notes array based on degree
@@ -83,7 +85,7 @@ export default function Home() {
     return [root, third, fifth];
   }, []);
 
-   // Function to generate a minor triad based on a root note
+    // Function to generate a minor triad based on a root note
   const getMinorTriad = React.useCallback((root: string, keyNotes: string[]): string[] | undefined => {
     const rootIndexInKey = keyNotes.indexOf(root);
     if (rootIndexInKey === -1) return undefined;
@@ -95,24 +97,24 @@ export default function Home() {
     const fifth = NOTES[(NOTES.indexOf(root) + 7) % NOTES.length]; // Perfect 5th interval
 
     // Ensure the notes are within the available NOTES array
-     if (NOTES.includes(root) && NOTES.includes(third) && NOTES.includes(fifth)) {
-       return [root, third, fifth];
-     }
-     return undefined;
+      if (NOTES.includes(root) && NOTES.includes(third) && NOTES.includes(fifth)) {
+        return [root, third, fifth];
+      }
+      return undefined;
 
   }, []);
 
-   // Function to generate a diminished triad based on a root note
-   const getDiminishedTriad = React.useCallback((root: string): string[] | undefined => {
+    // Function to generate a diminished triad based on a root note
+    const getDiminishedTriad = React.useCallback((root: string): string[] | undefined => {
         const rootIndex = NOTES.indexOf(root);
         if (rootIndex === -1) return undefined;
         const third = NOTES[(rootIndex + 3) % NOTES.length]; // Minor 3rd
         const fifth = NOTES[(rootIndex + 6) % NOTES.length]; // Diminished 5th
-         if (NOTES.includes(root) && NOTES.includes(third) && NOTES.includes(fifth)) {
-             return [root, third, fifth];
-         }
-         return undefined;
-   }, []);
+        if (NOTES.includes(root) && NOTES.includes(third) && NOTES.includes(fifth)) {
+              return [root, third, fifth];
+        }
+        return undefined;
+    }, []);
 
   // Function to calculate default chord progressions based on the selected key
   const calculateDefaultChordProgressions = React.useCallback((key: string) => {
@@ -137,11 +139,11 @@ export default function Home() {
 
       // Simplistic chord generation for I, IV, V, ii, iii, vi
       if (degreeRoman === 'I' || degreeRoman === 'IV' || degreeRoman === 'V') {
-         // Assuming Major triad for uppercase
+          // Assuming Major triad for uppercase
           const rootIndex = NOTES.indexOf(rootNote);
-           chordNotes = [rootNote, NOTES[(rootIndex + 4) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
+          chordNotes = [rootNote, NOTES[(rootIndex + 4) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
       } else if (degreeRoman === 'ii' || degreeRoman === 'iii' || degreeRoman === 'vi') {
-         // Assuming minor triad for lowercase
+          // Assuming minor triad for lowercase
           const rootIndex = NOTES.indexOf(rootNote);
           chordNotes = [rootNote, NOTES[(rootIndex + 3) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
           chordName += 'm';
@@ -149,9 +151,9 @@ export default function Home() {
           // Assuming diminished triad for vii°
           const rootIndex = NOTES.indexOf(rootNote);
           chordNotes = [rootNote, NOTES[(rootIndex + 3) % NOTES.length], NOTES[(rootIndex + 6) % NOTES.length]];
-           chordName += '°';
+          chordName += '°';
       }
-       // Add more complex chord logic here as needed (sus4, 7ths, etc.)
+      // Add more complex chord logic here as needed (sus4, 7ths, etc.)
 
       if (chordNotes.length > 0) {
           return { name: chordName, notes: chordNotes };
@@ -174,17 +176,15 @@ export default function Home() {
     }
 
     // Generate Other Common Chords
-     for (const roman of COMMON_OTHER_CHORDS) {
-         const chord = getChordFromRoman(roman);
-          if (chord) {
-               otherChords.push(chord);
-           }
-     }
+      for (const roman of COMMON_OTHER_CHORDS) {
+          const chord = getChordFromRoman(roman);
+            if (chord) {
+                  otherChords.push(chord);
+              }
+      }
 
     return { progressions, otherChords };
   }, []);
-
-
 
   const handleInitializeAudio = React.useCallback(async () => {
     await initializeAudio();
@@ -264,31 +264,42 @@ export default function Home() {
         setActiveNotes(prev => prev.filter(n => n !== entry.content));
       }, 500);
     } 
-     else if (entry.type === 'chord') {
+      else if (entry.type === 'chord') {
       // Find the chord in either the AI progression or the default progressions
       let matchedChord = aiChordProgression?.find(c => c.name === entry.content);
       if (!matchedChord) {
-         // If not found in AI progression, search in default progressions
-         const defaultProgs = calculateDefaultChordProgressions(pianoKey);
-         matchedChord = defaultProgs.otherChords.find(c => c.name === entry.content);
-         if (!matchedChord) {
-             for (const prog of defaultProgs.progressions) {
-                 matchedChord = prog.chords.find(c => c.name === entry.content);
-                 if (matchedChord) break;
-             }
-         }
+          // If not found in AI progression, search in default progressions
+          const defaultProgs = calculateDefaultChordProgressions(pianoKey);
+          matchedChord = defaultProgs.otherChords.find(c => c.name === entry.content);
+          // If still not found, search in the specific default progressions
+          if (!matchedChord) {
+              for (const prog of defaultProgs.progressions) {
+                  // Check all default progressions, not just the currently selected one for playback
+                  matchedChord = prog.chords.find(c => c.name === entry.content);
+                  if (matchedChord) break;
+              }
+          }
         }
       if (matchedChord) {
         handleChordPlay(matchedChord, false); // Don't add to transcript again
       }
     }
 
-  }, []);
+  }, [aiChordProgression, calculateDefaultChordProgressions, pianoKey, handleChordPlay, playNoteWithDuration]);
 
   // Calculate default progressions whenever pianoKey changes
   const defaultChordProgressions = React.useMemo(() => {
-     return calculateDefaultChordProgressions(pianoKey);
+      return calculateDefaultChordProgressions(pianoKey);
   }, [pianoKey, calculateDefaultChordProgressions]);
+
+  // Update selected progression when default progressions change (e.g., key change)
+  React.useEffect(() => {
+    if (defaultChordProgressions.progressions.length > 0) {
+        setSelectedProgressionName(defaultChordProgressions.progressions[0].name);
+    } else {
+        setSelectedProgressionName(null);
+    }
+  }, [defaultChordProgressions.progressions]);
 
   // Determine which chord progression to display: AI overrides default if available
   const displayedChordProgressions = aiChordProgression
@@ -352,52 +363,93 @@ export default function Home() {
               </CardContent>
             </Card>
           )}
-
-          {displayedChordProgressions && (displayedChordProgressions.progressions.length > 0 || displayedChordProgressions.otherChords.length > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Chord Progression Player</CardTitle>
-                <CardDescription>Click a chord to hear it played.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {/* Display Typical Progressions */}
-                {displayedChordProgressions.progressions.map(prog => (
-                    <div key={prog.name} className="mb-4 w-full">
-                        <h4 className="text-sm font-semibold mb-2">{prog.name}</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {prog.chords.map((chord, index) => (
-                                <Button
-                                    key={`${prog.name}-${chord.name}-${index}`}
-                                    variant="outline"
-                                    onClick={() => handleChordPlay(chord)}
-                                >
-                                    {chord.name}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-
-                {/* Display Other Common Chords */}
-                {displayedChordProgressions.otherChords.length > 0 && (
-                    <div className="w-full">
-                         <h4 className="text-sm font-semibold mb-2">Other Common Chords</h4>
-                         <div className="flex flex-wrap gap-2">
-                             {displayedChordProgressions.otherChords.map((chord, index) => (
-                                 <Button
-                                     key={`other-${chord.name}-${index}`}
-                                     variant="outline"
-                                     onClick={() => handleChordPlay(chord)}
-                                 >
-                                     {chord.name}
-                                 </Button>
-                             ))}
-                         </div>
-                    </div>
-                )}
-              </CardContent>
-            </Card>
+          
+          {displayedChordProgressions && displayedChordProgressions.progressions.length > 0 && !aiChordProgression && (
+              <div>
+                  <label className="text-sm font-medium mb-2 block">Select Chord Progression</label>
+                  <Select onValueChange={setSelectedProgressionName} value={selectedProgressionName || ''}>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select a progression" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {displayedChordProgressions.progressions.map((prog) => (
+                              <SelectItem key={prog.name} value={prog.name}>
+                                  {prog.name}
+                              </SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+              </div>
           )}
+          
+          {/***************************************************************}
+          {* THIS IS THE CORRECTED SECTION                               *}
+          {/***************************************************************/}
+          <Card>
+            <CardHeader>
+              <CardTitle>Chord Progression Player</CardTitle>
+              <CardDescription>Click a chord to hear it played.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Case 1: Display AI-Generated Progression */}
+              {aiChordProgression ? (
+                <div className="w-full">
+                  <h4 className="text-sm font-semibold mb-2">AI Suggestion</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {aiChordProgression.map((chord, index) => (
+                      <Button
+                        key={`ai-chord-${index}`}
+                        variant="outline"
+                        onClick={() => handleChordPlay(chord)}
+                      >
+                        {chord.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Case 2: Display Selected Default Progression (only if no AI progression) */}
+              {selectedProgressionName && !aiChordProgression ? (
+                displayedChordProgressions.progressions
+                  .filter(prog => prog.name === selectedProgressionName)
+                  .map(prog => (
+                    <div key={prog.name} className="w-full">
+                      <h4 className="text-sm font-semibold mb-2">{prog.name}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {prog.chords.map((chord, index) => (
+                          <Button
+                            key={`${prog.name}-${chord.name}-${index}`}
+                            variant="outline"
+                            onClick={() => handleChordPlay(chord)}
+                          >
+                            {chord.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+              ) : null}
+
+              {/* Case 3: Display Other Common Chords (always shows if they exist) */}
+              {displayedChordProgressions.otherChords.length > 0 && (
+                <div className="w-full">
+                  <h4 className="text-sm font-semibold mb-2">Other Common Chords</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {displayedChordProgressions.otherChords.map((chord, index) => (
+                      <Button
+                        key={`other-chord-${index}`}
+                        variant="outline"
+                        onClick={() => handleChordPlay(chord)}
+                      >
+                        {chord.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Sketchbook 
             rows={sketchbookRows}
@@ -494,7 +546,6 @@ export default function Home() {
                     {Object.keys(KEY_NOTES).map((key) => (
                       <SelectItem key={key} value={key}>
                         {key}
-
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -530,3 +581,4 @@ export default function Home() {
       </div>
     </main>
   );
+}
