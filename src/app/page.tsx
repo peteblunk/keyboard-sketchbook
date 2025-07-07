@@ -37,7 +37,26 @@ import { TYPICAL_PROGRESSIONS, COMMON_OTHER_CHORDS } from '@/lib/constants';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { SuggestHarmonyOutput, Chord } from '@/ai/flows/suggest-harmony';
+// ADD THESE HELPER FUNCTIONS AFTER YOUR IMPORTS
 
+const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+/**
+ * Builds a Dominant 7th chord from a root note.
+ */
+function getDominant7thChord(rootNote: string): Chord {
+  const rootIndex = ALL_NOTES.indexOf(rootNote);
+  if (rootIndex === -1) {
+    return { name: 'Error', notes: [] };
+  }
+  const third = ALL_NOTES[(rootIndex + 4) % 12];
+  const fifth = ALL_NOTES[(rootIndex + 7) % 12];
+  const seventh = ALL_NOTES[(rootIndex + 10) % 12];
+  return {
+    name: `${rootNote}7`,
+    notes: [rootNote, third, fifth, seventh],
+  };
+}
 export default function Home() {
   const [octave, setOctave] = React.useState(4);
   const [activeNotes, setActiveNotes] = React.useState<string[]>([]);
@@ -117,74 +136,93 @@ export default function Home() {
     }, []);
 
   // Function to calculate default chord progressions based on the selected key
-  const calculateDefaultChordProgressions = React.useCallback((key: string) => {
-    const progressions: { name: string; chords: Chord[] }[] = [];
-    const otherChords: Chord[] = [];
-    const notes = KEY_NOTES[key];
-    if (!notes) return { progressions: [], otherChords: [] };
+  // REPLACE your existing calculateDefaultChordProgressions with this one
 
-    // Helper to get chord notes from Roman numeral
-    const getChordFromRoman = (roman: string): Chord | undefined => {
-      // Basic implementation - needs expansion for 7ths, suspended, diminished etc.
-      const degreeMatch = roman.match(/^([iIvV]+)/);
-      if (!degreeMatch) return undefined;
+const calculateDefaultChordProgressions = React.useCallback((key: string) => {
+  const progressions: { name: string; chords: Chord[] }[] = [];
+  const otherChords: Chord[] = [];
+  const notes = KEY_NOTES[key];
+  if (!notes) return { progressions: [], otherChords: [] };
 
-      const degreeRoman = degreeMatch[1];
-      const degree = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'].indexOf(degreeRoman.toLowerCase()) + 1;
-      const rootNote = notes[degree - 1];
-      if (!rootNote) return undefined;
+  const ROMAN_TO_DEGREE: { [key: string]: number } = { 'i': 1, 'ii': 2, 'iii': 3, 'iv': 4, 'v': 5, 'vi': 6, 'vii': 7 };
 
-      let chordNotes: string[] = [];
-      let chordName = rootNote;
+  // Helper to get chord notes from Roman numeral
+  const getChordFromRoman = (roman: string): Chord | undefined => {
+    // Check for Secondary Dominant (e.g., "V7/V")
+    if (roman.includes('/')) {
+      const parts = roman.split('/'); // e.g., ["V7", "V"]
+      const targetRoman = parts[1].toLowerCase(); // "v"
+      const targetDegree = ROMAN_TO_DEGREE[targetRoman];
+      if (!targetDegree) return undefined;
 
-      // Simplistic chord generation for I, IV, V, ii, iii, vi
-      if (degreeRoman === 'I' || degreeRoman === 'IV' || degreeRoman === 'V') {
-          // Assuming Major triad for uppercase
-          const rootIndex = NOTES.indexOf(rootNote);
-          chordNotes = [rootNote, NOTES[(rootIndex + 4) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
-      } else if (degreeRoman === 'ii' || degreeRoman === 'iii' || degreeRoman === 'vi') {
-          // Assuming minor triad for lowercase
-          const rootIndex = NOTES.indexOf(rootNote);
-          chordNotes = [rootNote, NOTES[(rootIndex + 3) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
-          chordName += 'm';
-      } else if (degreeRoman === 'vii') {
-          // Assuming diminished triad for vii°
-          const rootIndex = NOTES.indexOf(rootNote);
-          chordNotes = [rootNote, NOTES[(rootIndex + 3) % NOTES.length], NOTES[(rootIndex + 6) % NOTES.length]];
-          chordName += '°';
-      }
-      // Add more complex chord logic here as needed (sus4, 7ths, etc.)
+      const targetRoot = notes[targetDegree - 1];
 
-      if (chordNotes.length > 0) {
-          return { name: chordName, notes: chordNotes };
-      }
-      return undefined;
-    };
-
-    // Generate Typical Progressions
-    for (const progDef of TYPICAL_PROGRESSIONS) {
-      const chords: Chord[] = [];
-      for (const roman of progDef.romanNumerals) {
-        const chord = getChordFromRoman(roman);
-        if (chord) {
-          chords.push(chord);
-        }
-      }
-      if (chords.length > 0) {
-        progressions.push({ name: progDef.name, chords });
-      }
+      // The root of the secondary dominant is a perfect fifth (7 semitones) above the target
+      const targetRootIndex = ALL_NOTES.indexOf(targetRoot);
+      const dominantRootNote = ALL_NOTES[(targetRootIndex + 7) % 12];
+      
+      // For now, we assume all secondary dominants are V7 chords
+      return getDominant7thChord(dominantRootNote);
     }
 
-    // Generate Other Common Chords
-      for (const roman of COMMON_OTHER_CHORDS) {
-          const chord = getChordFromRoman(roman);
-            if (chord) {
-                  otherChords.push(chord);
-              }
-      }
+    // --- Original Diatonic Chord Logic (with slight improvements) ---
+    const degreeMatch = roman.match(/^([iIvV]+)/);
+    if (!degreeMatch) return undefined;
+    
+    const degreeRoman = degreeMatch[1];
+    const degree = ROMAN_TO_DEGREE[degreeRoman.toLowerCase()];
+    if (!degree) return undefined;
 
-    return { progressions, otherChords };
-  }, []);
+    const rootNote = notes[degree - 1];
+    if (!rootNote) return undefined;
+
+    let chordNotes: string[] = [];
+    let chordName = rootNote;
+    const rootIndex = NOTES.indexOf(rootNote);
+
+    if (degreeRoman === 'I' || degreeRoman === 'IV' || degreeRoman === 'V') {
+      // Major triad
+      chordNotes = [rootNote, NOTES[(rootIndex + 4) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
+    } else if (degreeRoman === 'ii' || degreeRoman === 'iii' || degreeRoman === 'vi') {
+      // minor triad
+      chordNotes = [rootNote, NOTES[(rootIndex + 3) % NOTES.length], NOTES[(rootIndex + 7) % NOTES.length]];
+      chordName += 'm';
+    } else if (degreeRoman.toLowerCase() === 'vii') {
+      // diminished triad
+      chordNotes = [rootNote, NOTES[(rootIndex + 3) % NOTES.length], NOTES[(rootIndex + 6) % NOTES.length]];
+      chordName += '°';
+    }
+
+    if (chordNotes.length > 0) {
+      return { name: chordName, notes: chordNotes };
+    }
+    return undefined;
+  };
+
+  // Generate Typical Progressions
+  for (const progDef of TYPICAL_PROGRESSIONS) {
+    const chords: Chord[] = [];
+    for (const roman of progDef.romanNumerals) {
+      const chord = getChordFromRoman(roman);
+      if (chord) {
+        chords.push(chord);
+      }
+    }
+    if (chords.length > 0) {
+      progressions.push({ name: progDef.name, chords });
+    }
+  }
+
+  // Generate Other Common Chords
+  for (const roman of COMMON_OTHER_CHORDS) {
+    const chord = getChordFromRoman(roman);
+      if (chord) {
+        otherChords.push(chord);
+      }
+  }
+
+  return { progressions, otherChords };
+}, []);
 
   const handleInitializeAudio = React.useCallback(async () => {
     await initializeAudio();

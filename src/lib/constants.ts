@@ -73,24 +73,6 @@ export const DEMO_MELODY: { note: string; duration: string; time: number | strin
   { note: "B3", duration: "2n", time: "2:3:2" },
 ];
 
-export const TYPICAL_PROGRESSIONS = [
-  {
-    name: "Basic Progression (I-IV-V-I)",
-    romanNumerals: ["I", "IV", "V", "I"],
-  },
-  {
-    name: "Pop Progression (I-V-vi-IV)",
-    romanNumerals: ["I", "V", "vi", "IV"],
-  },
-  {
-    name: "Jazz Progression (ii-V-I)",
-    romanNumerals: ["ii", "V", "I"],
-  },
-  {
-    name: "Doo-Wop Progression (I-vi-IV-V)",
-    romanNumerals: ["I", "vi", "IV", "V"],
-  },
-];
 
 export const COMMON_OTHER_CHORDS = [
   "Isus4",
@@ -99,4 +81,37 @@ export const COMMON_OTHER_CHORDS = [
   "V7",
   "iv", // Minor iv chord is common in minor keys
   "III", // Major III chord is common in minor keys
+];
+// In your constants file (e.g., lib/constants.ts)
+
+// In lib/constants.ts
+
+export const TYPICAL_PROGRESSIONS = [
+  // Your Original Progressions
+  {
+    name: 'Basic Progression (I-IV-V-I)',
+    romanNumerals: ['I', 'IV', 'V', 'I'],
+  },
+  {
+    name: 'Pop Progression (I-V-vi-IV)',
+    romanNumerals: ['I', 'V', 'vi', 'IV'],
+  },
+  {
+    name: 'Jazz Progression (ii-V-I)',
+    romanNumerals: ['ii', 'V', 'I'],
+  },
+  {
+    name: 'Doo-Wop Progression (I-vi-IV-V)',
+    romanNumerals: ['I', 'vi', 'IV', 'V'],
+  },
+
+  // New Progressions with Secondary Dominants
+  {
+    name: 'Circle of Fifths (V7/V)',
+    romanNumerals: ['I', 'IV', 'V7/V', 'V', 'I'],
+  },
+  {
+    name: 'Pachelbel Canon variation',
+    romanNumerals: ['I', 'V', 'V7/vi', 'vi', 'V7/IV', 'IV', 'I', 'V'],
+  },
 ];
