@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Tone from 'tone';
-import { DEMO_MELODY } from '@/lib/constants';
 
 export type InstrumentName = 'piano' | 'organ' | 'strings';
 
@@ -37,9 +36,7 @@ const createSynth = (instrument: InstrumentName) => {
 export function useSound() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isPlayingDemo, setIsPlayingDemo] = useState(false);
   const instrumentRef = useRef<Tone.PolySynth | null>(null);
-  const sequenceRef = useRef<Tone.Sequence | null>(null);
   
   const initializeAudio = useCallback(async () => {
     await Tone.start();
@@ -82,59 +79,14 @@ export function useSound() {
     setIsMuted(Tone.Destination.mute);
   }, []);
 
-  useEffect(() => {
-    const seq = new Tone.Sequence(
-      (time, { note, duration }) => {
-        if (instrumentRef.current) {
-          instrumentRef.current.triggerAttackRelease(note, duration, time);
-        }
-      },
-      DEMO_MELODY,
-      '4n'
-    );
-    
-    sequenceRef.current = seq;
-
-    return () => {
-      sequenceRef.current?.dispose();
-    };
-  }, []);
-
-  const playDemo = useCallback(() => {
-    if (sequenceRef.current) {
-        if (Tone.Transport.state !== 'started') {
-            Tone.Transport.start();
-        }
-        sequenceRef.current.start(0);
-        setIsPlayingDemo(true);
-
-        // Schedule a callback for when the sequence finishes
-        Tone.Transport.scheduleOnce(() => {
-          setIsPlayingDemo(false);
-        }, sequenceRef.current.loopEnd);
-    }
-  }, []);
-
-  const stopDemo = useCallback(() => {
-    if (sequenceRef.current) {
-        Tone.Transport.stop();
-        sequenceRef.current.stop();
-        setIsPlayingDemo(false);
-        instrumentRef.current?.releaseAll();
-    }
-  }, []);
-
   return {
     isLoaded,
-    isPlayingDemo,
     isMuted,
     playNote,
     stopNote,
     playChord,
     playNoteWithDuration,
     setInstrument,
-    playDemo,
-    stopDemo,
     toggleMute,
     initializeAudio,
   };

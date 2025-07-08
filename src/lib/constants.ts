@@ -54,25 +54,6 @@ export const KEY_NOTES: { [key: string]: string[] } = {
   "Ab Minor": ["G#", "A#", "B", "C#", "D#", "E", "F#"], // Cb is B, Fb is E, Gb is F#
 };
 
-export const DEMO_MELODY: { note: string; duration: string; time: number | string }[] = [
-  { note: "B3", duration: "8n", time: 0 },
-  { note: "C#4", duration: "8n", time: "0:0:2" },
-  { note: "D4", duration: "8n", time: "0:1" },
-  { note: "E4", duration: "8n", time: "0:1:2" },
-  { note: "F#4", duration: "8n", time: "0:2" },
-  { note: "G4", duration: "4n", time: "0:2:2" },
-  { note: "F#4", duration: "8n", time: "0:3:2" },
-  { note: "E4", duration: "8n", time: "1:0" },
-  { note: "D4", duration: "8n", time: "1:0:2" },
-  { note: "C#4", duration: "8n", time: "1:1" },
-  { note: "B3", duration: "4n", time: "1:1:2" },
-  { note: "A3", duration: "4n", time: "1:2:2" },
-  { note: "B3", duration: "4n", time: "1:3:2" },
-  { note: "C#4", duration: "4n", time: "2:0:2" },
-  { note: "D4", duration: "2n", time: "2:1:2" },
-  { note: "B3", duration: "2n", time: "2:3:2" },
-];
-
 
 export const COMMON_OTHER_CHORDS = [
   "Isus4",

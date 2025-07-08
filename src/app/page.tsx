@@ -4,9 +4,6 @@ import * as React from 'react';
 import {
   Keyboard,
   Music,
-  Rewind,
-  Play,
-  Pause,
   OctagonX,
   Volume2,
   VolumeX,
@@ -69,15 +66,12 @@ export default function Home() {
 
   const {
     isLoaded,
-    isPlayingDemo,
     isMuted,
     playNote,
     stopNote,
     playChord,
     playNoteWithDuration,
     setInstrument,
-    playDemo,
-    stopDemo,
     toggleMute,
     initializeAudio,
   } = useSound();
@@ -231,8 +225,8 @@ const calculateDefaultChordProgressions = React.useCallback((key: string) => {
 
   // Function to add an entry to the sketchbook transcript
   const addTranscriptEntry = React.useCallback((content: string, type: 'note' | 'chord') => {
-    const newEntry: TranscriptEntry = { id: entryIdCounter.current++, content, type };
     setSketchbookRows(prevRows => {
+      const newEntry: TranscriptEntry = { id: entryIdCounter.current++, content, type };
       const lastRow = prevRows[prevRows.length - 1];
       const updatedLastRow = {
         ...lastRow,
@@ -588,20 +582,6 @@ const calculateDefaultChordProgressions = React.useCallback((key: string) => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Demo Melody</label>
-                <CardDescription>"Es ist vollbracht"</CardDescription>
-                <div className="flex items-center gap-2 mt-2">
-                  <Button onClick={playDemo} disabled={isPlayingDemo} variant="outline" size="icon">
-                    {isPlayingDemo ? <Pause /> : <Play />}
-                    <span className="sr-only">Play/Pause</span>
-                  </Button>
-                  <Button onClick={stopDemo} variant="outline" size="icon">
-                    <Rewind />
-                    <span className="sr-only">Rewind</span>
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
